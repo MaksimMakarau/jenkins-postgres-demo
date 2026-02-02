@@ -10,9 +10,15 @@ pipeline {
         // Настройка Docker клиента (как и раньше)
         DOCKER_HOST = 'tcp://127.0.0.1:2375'
     }
-
+    
     stages {
-        stage('Check Connectivity') {
+        stage('Checkout SCM') {
+            // Этот этап нужен, чтобы Jenkins скачал папку db/ с GitHub
+            steps {
+                checkout scm
+            }
+        }
+        /*stage('Check Connectivity') {
             steps {
                 // Используем credentials, которые мы создали ранее
                 withCredentials([string(credentialsId: 'postgres-db-pass', variable: 'DB_PASSWORD')]) {
@@ -30,8 +36,29 @@ pipeline {
                     }
                 }
             }
+        }*/
+         stage('Liquibase Migration') {
+            steps {
+                withCredentials([string(credentialsId: 'postgres-db-pass', variable: 'DB_PASSWORD')]) {
+                    script {
+                        echo "Запускаем миграцию базы данных через Liquibase..."
+                        
+                        // Мы монтируем текущую папку workspace (%WORKSPACE%) внутрь контейнера,
+                        // чтобы Liquibase увидел наш файл db/changelog.sql
+                        bat """
+                            docker run --rm ^
+                            -v "%WORKSPACE%/db":/liquibase/changelog ^
+                            liquibase/liquibase ^
+                            --url="jdbc:postgresql://%DB_HOST%:%DB_PORT%/%DB_NAME%" ^
+                            --changeLogFile=changelog.sql ^
+                            --username=postgres ^
+                            --password=%DB_PASSWORD% ^
+                            update
+                        """
+                    }
+                }
+            }
         }
-        
         /*stage('Create Table on VM') {
             steps {
                 withCredentials([string(credentialsId: 'postgres-db-pass', variable: 'DB_PASSWORD')]) {
@@ -58,7 +85,7 @@ pipeline {
                             docker run --rm ^
                             -e PGPASSWORD=%DB_PASSWORD% ^
                             postgres:alpine ^
-                            psql -h %DB_HOST% -U %DB_USER% -d postgres -c "SELECT * FROM jenkins_test;"
+                            psql -h %DB_HOST% -U %DB_USER% -d postgres -c "SELECT * FROM users;"
                         """
                     }
                 }
