@@ -32,7 +32,7 @@ pipeline {
             }
         }
         
-        stage('Create Table on VM') {
+        /*stage('Create Table on VM') {
             steps {
                 withCredentials([string(credentialsId: 'postgres-db-pass', variable: 'DB_PASSWORD')]) {
                     script {
@@ -42,6 +42,23 @@ pipeline {
                             -e PGPASSWORD=%DB_PASSWORD% ^
                             postgres:alpine ^
                             psql -h %DB_HOST% -U %DB_USER% -d postgres -c "CREATE TABLE IF NOT EXISTS jenkins_test (id serial PRIMARY KEY, info text); INSERT INTO jenkins_test (info) VALUES ('Hello from Windows');"
+                        """
+                    }
+                }
+            }
+        }*/
+        stage('Verify Data') {
+            steps {
+                withCredentials([string(credentialsId: 'postgres-db-pass', variable: 'DB_PASSWORD')]) {
+                    script {
+                        echo "=== Автоматическая проверка данных ==="
+                        // Мы делаем SELECT. Если подключение пройдет успешно, мы увидим данные в логе.
+                        // Если что-то сломалось, команда вернет код ошибки, и пайплайн покраснеет.
+                        bat """
+                            docker run --rm ^
+                            -e PGPASSWORD=%DB_PASSWORD% ^
+                            postgres:alpine ^
+                            psql -h %DB_HOST% -U %DB_USER% -d postgres -c "SELECT * FROM jenkins_test;"
                         """
                     }
                 }
