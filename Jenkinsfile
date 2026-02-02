@@ -6,9 +6,11 @@ pipeline {
         DB_HOST = 'host.docker.internal' 
         DB_PORT = '5432'
         DB_USER = 'postgres' // Или имя твоего пользователя в Debian
-        
         // Настройка Docker клиента (как и раньше)
         DOCKER_HOST = 'tcp://127.0.0.1:2375'
+        // Версия драйвера, которую будем качать
+        PG_DRIVER_URL = 'https://jdbc.postgresql.org/download/postgresql-42.7.2.jar'
+        PG_DRIVER_NAME = 'postgresql-42.7.2.jar'
     }
     
     stages {
@@ -37,6 +39,20 @@ pipeline {
                 }
             }
         }*/
+         // НОВЫЙ ЭТАП: Скачиваем драйвер
+        stage('Prepare Drivers') {
+            steps {
+                script {
+                    echo "Скачиваем JDBC драйвер для PostgreSQL..."
+                    // Создаем папку lib, если её нет
+                    bat 'if not exist lib mkdir lib'
+                    
+                    // Скачиваем файл с помощью curl (он идет в комплекте с Git for Windows)
+                    // Кладем его в папку lib
+                    bat "curl -L -o lib/${PG_DRIVER_NAME} ${PG_DRIVER_URL}"
+                }
+            }
+        }
          stage('Liquibase Migration') {
             steps {
                 withCredentials([string(credentialsId: 'postgres-db-pass', variable: 'DB_PASSWORD')]) {
@@ -48,6 +64,7 @@ pipeline {
                         bat """
                             docker run --rm ^
                             -v "%WORKSPACE%/db":/liquibase/changelog ^
+                            -v "%WORKSPACE%/lib":/liquibase/lib ^
                             liquibase/liquibase ^
                             --url="jdbc:postgresql://%DB_HOST%:%DB_PORT%/%DB_NAME%" ^
                             --changeLogFile=changelog.sql ^
