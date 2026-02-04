@@ -140,7 +140,7 @@ pipeline {
             steps {
                 script {
                     // Настройки Elasticsearch
-                    def es_url = "http://localhost:9200/deploy-events/_doc"
+                    def es_url = "https://localhost:9200/deploy-events/_doc"
                     // В Elastic нужна Basic Auth (логин:пароль) или API Key
                     // Если у тебя отключена безопасность (для тестов) — можно без -u
                     def es_auth = "elastic:ULWsoqLir92SHxMj8X+4" 
@@ -160,7 +160,7 @@ pipeline {
                     writeFile file: 'es_payload.json', text: payloadJson
                     
                     // Отправляем в индекс 'deploy-events'
-                    bat "curl -X POST -u ${es_auth} -H \"Content-Type: application/json\" -d @es_payload.json ${es_url}"
+                    bat "curl -X POST --insecure -u ${es_auth} -H \"Content-Type: application/json\" -d @es_payload.json ${es_url}"
                 }
             }
         }
