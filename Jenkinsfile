@@ -116,7 +116,7 @@ pipeline {
                 def grafana_token = "Bearer glsa_tqNMJTSC7QvjDNqVS5e105gQrLT74EsG_741bf083"
             
                 // Формируем сообщение
-                def payload = """
+                def payloadJson = """
                 {
                   "dashboardUID": "YOUR_DASHBOARD_UID", 
                   "tags": ["deploy", "liquibase"],
