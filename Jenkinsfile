@@ -124,8 +124,15 @@ pipeline {
                 }
                 """
             
-                // Отправляем запрос
-                sh "curl -X POST -H 'Content-Type: application/json' -H 'Authorization: ${grafana_token}' -d '${payload}' ${grafana_url}"
+                // 2. СОХРАНЯЕМ JSON В ФАЙЛ (Это спасает от проблем с кавычками в Windows)
+                writeFile file: 'annotation_payload.json', text: payloadJson
+            
+                 // 3. Запускаем curl через 'bat' (Windows Batch)
+                // Обрати внимание:
+                // - Используем bat вместо sh
+                // - Используем двойные кавычки " для заголовков
+                // - Используем -d @имя_файла для отправки JSON
+                bat "curl -X POST -H \"Content-Type: application/json\" -H \"Authorization: ${grafana_token}\" -d @annotation_payload.json ${grafana_url}"
         }
     }
 }
