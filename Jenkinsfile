@@ -118,7 +118,7 @@ pipeline {
                 // Формируем сообщение
                 def payloadJson = """
                 {
-                  "dashboardUID": "YOUR_DASHBOARD_UID", 
+                  "dashboardUID": "adqqpjf", 
                   "tags": ["deploy", "liquibase"],
                   "text": "Migration Deployed: Build #${BUILD_NUMBER}"
                 }
