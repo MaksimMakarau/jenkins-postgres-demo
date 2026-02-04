@@ -107,34 +107,62 @@ pipeline {
                     }
                 }
             }
-        }
+        }/*
         stage('Notify Grafana') {
             steps {
-            script {
-                // Замени ТОКЕН и IP адрес на свои
-                def grafana_url = "http://localhost:3000/api/annotations"
-                def grafana_token = "Bearer glsa_KxsAMVWiqBHpJVegrZrOhhlRBZcRA4tb_f0e1e89d"
+                script {
+                    // Замени ТОКЕН и IP адрес на свои
+                    def grafana_url = "http://localhost:3000/api/annotations"
+                    def grafana_token = "Bearer glsa_KxsAMVWiqBHpJVegrZrOhhlRBZcRA4tb_f0e1e89d"
             
-                // Формируем сообщение
-                def payloadJson = """
-                {
-                  "dashboardUID": "adqqpjf", 
-                  "tags": ["deploy", "liquibase"],
-                  "text": "Migration Deployed: Build #${BUILD_NUMBER}"
-                }
-                """
+                    // Формируем сообщение
+                    def payloadJson = """
+                    {
+                      "dashboardUID": "adqqpjf", 
+                      "tags": ["deploy", "liquibase"],
+                      "text": "Migration Deployed: Build #${BUILD_NUMBER}"
+                    }
+                    """
             
-                // 2. СОХРАНЯЕМ JSON В ФАЙЛ (Это спасает от проблем с кавычками в Windows)
-                writeFile file: 'annotation_payload.json', text: payloadJson
+                    // 2. СОХРАНЯЕМ JSON В ФАЙЛ (Это спасает от проблем с кавычками в Windows)
+                    writeFile file: 'annotation_payload.json', text: payloadJson
             
-                 // 3. Запускаем curl через 'bat' (Windows Batch)
-                // Обрати внимание:
-                // - Используем bat вместо sh
-                // - Используем двойные кавычки " для заголовков
-                // - Используем -d @имя_файла для отправки JSON
-                bat "curl -X POST -H \"Content-Type: application/json\" -H \"Authorization: ${grafana_token}\" -d @annotation_payload.json ${grafana_url}"
+                     // 3. Запускаем curl через 'bat' (Windows Batch)
+                    // Обрати внимание:
+                    // - Используем bat вместо sh
+                    // - Используем двойные кавычки " для заголовков
+                    // - Используем -d @имя_файла для отправки JSON
+                    bat "curl -X POST -H \"Content-Type: application/json\" -H \"Authorization: ${grafana_token}\" -d @annotation_payload.json ${grafana_url}"
         }
     }
-}
+}*/
+        stage('Notify Elasticsearch') {
+            steps {
+                script {
+                    // Настройки Elasticsearch
+                    def es_url = "http://localhost:9200/deploy-events/_doc"
+                    // В Elastic нужна Basic Auth (логин:пароль) или API Key
+                    // Если у тебя отключена безопасность (для тестов) — можно без -u
+                    def es_auth = "elastic:ULWsoqLir92SHxMj8X+4" 
+                    
+                    // Формируем JSON. Важно добавить @timestamp!
+                    // В Windows cmd сложно получить ISO дату, поэтому пусть Elastic сам поставит время приема
+                    def payloadJson = """
+                    {
+                      "@timestamp": "${new Date().format("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone("UTC"))}",
+                      "event_type": "deployment",
+                      "service": "postgres-demo",
+                      "build_number": "${BUILD_NUMBER}",
+                      "message": "Deploy via Liquibase"
+                    }
+                    """
+                    
+                    writeFile file: 'es_payload.json', text: payloadJson
+                    
+                    // Отправляем в индекс 'deploy-events'
+                    bat "curl -X POST -u ${es_auth} -H \"Content-Type: application/json\" -d @es_payload.json ${es_url}"
+                }
+            }
+        }
     }
 }
