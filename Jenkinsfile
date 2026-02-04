@@ -140,7 +140,7 @@ pipeline {
             steps {
                 script {
                     // Настройки Elasticsearch
-                    def es_url = "http://localhost:9200/deploy-events/_doc"
+                    def es_url = "http://127.0.0.1:9200/deploy-events/_doc"
                     // В Elastic нужна Basic Auth (логин:пароль) или API Key
                     // Если у тебя отключена безопасность (для тестов) — можно без -u
                     def es_auth = "elastic:ULWsoqLir92SHxMj8X+4" 
