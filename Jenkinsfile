@@ -113,7 +113,7 @@ pipeline {
             script {
                 // Замени ТОКЕН и IP адрес на свои
                 def grafana_url = "http://localhost:3000/api/annotations"
-                def grafana_token = "Bearer glsa_tqNMJTSC7QvjDNqVS5e105gQrLT74EsG_741bf083"
+                def grafana_token = "Bearer glsa_KxsAMVWiqBHpJVegrZrOhhlRBZcRA4tb_f0e1e89d"
             
                 // Формируем сообщение
                 def payloadJson = """
