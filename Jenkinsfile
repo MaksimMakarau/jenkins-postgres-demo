@@ -108,5 +108,26 @@ pipeline {
                 }
             }
         }
+        stage('Notify Grafana') {
+            steps {
+            script {
+                // Замени ТОКЕН и IP адрес на свои
+                def grafana_url = "http://localhost:3000/api/annotations"
+                def grafana_token = "Bearer glsa_tqNMJTSC7QvjDNqVS5e105gQrLT74EsG_741bf083"
+            
+                // Формируем сообщение
+                def payload = """
+                {
+                  "dashboardUID": "YOUR_DASHBOARD_UID", 
+                  "tags": ["deploy", "liquibase"],
+                  "text": "Migration Deployed: Build #${BUILD_NUMBER}"
+                }
+                """
+            
+                // Отправляем запрос
+                sh "curl -X POST -H 'Content-Type: application/json' -H 'Authorization: ${grafana_token}' -d '${payload}' ${grafana_url}"
+        }
+    }
+}
     }
 }
